@@ -25,6 +25,14 @@ ${PAYMENT.CASH_METHOD_BUTTON}      name:เงินสด
 # ปุ่มตกลงมี id btnOK ซ้ำกับปุ่มสิ้นสุดการขาย -> ต้อง Control Window DlgAmount ก่อนกด
 ${PAYMENT.AMOUNT_DIALOG}           id:DlgAmount
 ${PAYMENT.AMOUNT_CONFIRM_BUTTON}   id:btnOK
+${PAYMENT.AMOUNT_CLEAR_BUTTON}     id:btnClear
+${PAYMENT.AMOUNT_POINT_BUTTON}     id:btnPoint
+# ปุ่มตัวเลข: id:btnNum0 ... id:btnNum9
+
+# หน้าต่างเงินทอน (ขึ้นหลังสิ้นสุดการขายเมื่อจ่ายเกินยอด)
+${CHANGE.DIALOG}                   id:DlgChange
+${CHANGE.AMOUNT_FIELD}             id:txtAmount
+${CHANGE.OK_BUTTON}                id:btnOK
 
 ${PRINT_KITCHEN.DIALOG}            id:DlgAskPrintKitchen
 ${PRINT_KITCHEN.DECLINE_BUTTON}    id:btnNo

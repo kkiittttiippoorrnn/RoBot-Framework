@@ -1079,3 +1079,35 @@ a print-to-file printer - this machine has "Microsoft Print to PDF" on
 `PORTPROMPT:` - i.e. the "slip number" was a PDF file name for a printed
 receipt, not a POS screen. It never appeared here and depends on printer
 setup, so it was removed. Receipt printing can get its own test later.
+
+## POS-SALE-002 / POS-E2E-002 - cash payment with change
+
+Read from the POS source before writing the test: DlgPaymentW8 has no
+separate change field - `txtBalance` = total due - paid, so overpaying
+shows a negative balance; DlgAmount has keypad buttons `btnNum0-9`,
+`btnPoint`, `btnClear`. In the DB, `Change` = `Tendered` - `Total`
+(positive) on 6,529 of the 6,551 bills that have change.
+
+First run: payment checks passed, then the test failed waiting for the
+empty order screen - the screenshot showed a "เงินทอน" dialog (DlgChange:
+`txtAmount`, `btnOK`) after the kitchen-print prompt. Added `Change Dialog
+Should Show` (change on screen = tendered - total, then OK). Both tests
+pass; RC6910300036: total 374.50, tendered 400, change 25.50 in the DB.
+
+## Data-driven sale (POS-E2E-DD-01..03)
+
+While choosing items for the data table: the quick-sale button
+"<PRODUCT_B>" has no item of that name in `Items`; its sale is saved under
+a different description. Items whose button text differs from the saved
+name cannot be checked by name in the DB, so the table uses three items
+whose names match. All three pass.
+
+## Full run with 18 tests - two start-up failures, rerun option added
+
+First full run with the new tests: 16 / 18. POS-E2E-001 - the POS window
+never appeared within 60 s (screenshot: empty desktop); POS-E2E-DD-02 -
+only two PIN digits registered and login failed. Both are in launch / login,
+which passed in every earlier run, and both passed when rerun with
+`robot --rerunfailed`. Added `run.ps1 -RerunFailed`: reruns only the failed
+tests into `rerun/` and merges both runs into `merged/` (exit code = rerun
+result), so a slow POS start is told apart from a real failure.

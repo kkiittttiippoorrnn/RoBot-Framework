@@ -66,3 +66,15 @@ Exact Cash Sale Should Be Saved In Database
     Should Be Equal As Numbers    ${db.tendered}    ${db.total}    msg=รับเงิน ${db.tendered} ไม่เท่ายอด ${db.total}
     Should Be Equal As Numbers    ${db.change}    0    msg=เงินทอน ${db.change} ควรเป็น 0
     Sale Should Contain Item    ${sale_num}    ${item_name}
+
+Cash Sale With Change Should Be Saved In Database
+    [Documentation]    เช็คบิลที่จ่ายเกิน: ยอดตรงหน้าจอ, รับเงิน = ${tendered},
+    ...    เงินทอน = รับเงิน - ยอด และมีสินค้าที่สั่ง
+    [Arguments]    ${sale_num}    ${screen_total}    ${tendered}    ${item_name}
+    &{db}=    Get Sale Financials    ${sale_num}
+    ${screen_total}=    Remove String    ${screen_total}    ,    ${SPACE}
+    ${expected_change}=    Evaluate    round(${tendered} - ${screen_total}, 2)
+    Should Be Equal As Numbers    ${db.total}    ${screen_total}    msg=ยอดสุทธิ: DB ${db.total} / จอ ${screen_total}
+    Should Be Equal As Numbers    ${db.tendered}    ${tendered}    msg=รับเงิน: DB ${db.tendered} / จ่ายจริง ${tendered}
+    Should Be Equal As Numbers    ${db.change}    ${expected_change}    msg=เงินทอน: DB ${db.change} / ควรเป็น ${expected_change}
+    Sale Should Contain Item    ${sale_num}    ${item_name}

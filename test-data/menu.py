@@ -21,6 +21,11 @@ MENU_SUBCATEGORY = os.getenv("POS_MENU_SUBCATEGORY", "<SUBCATEGORY>")
 WALK_IN_ITEM = os.getenv("POS_WALK_IN_ITEM", "<PRODUCT_A>")
 WALK_IN_SECOND_ITEM = os.getenv("POS_WALK_IN_SECOND_ITEM", "<PRODUCT_B>")
 
+# data-driven sale: สินค้าหลายรายการในหมวดย่อยเดียวกัน คั่นด้วย |
+# (ข้อความบนปุ่มต้องตรงกับชื่อที่บันทึกลงบิล เพราะ test เช็คชื่อใน DB)
+SALE_ITEMS = os.getenv(
+    "POS_SALE_ITEMS", "<PRODUCT_A>|<PRODUCT_D>|<PRODUCT_E>").split("|")
+
 # ทานที่ร้าน (Flow 06): เส้นทางเมนูตั้งแต่หมวดบนสุดจนถึงสินค้า คั่นด้วย |
 DINE_IN_MENU_PATH = os.getenv(
     "POS_DINE_IN_MENU_PATH", "<CATEGORY>|<SUBCATEGORY>|<PRODUCT_C>").split("|")

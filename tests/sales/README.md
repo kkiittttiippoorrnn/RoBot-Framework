@@ -14,5 +14,6 @@ Planned test cases (implement and stabilize one at a time, in order):
 Status: POS-SALE-001 is implemented and iterated against real runs
 (`docs/inspection-log.md`). POS-SALE-003 reuses the same keywords with a
 second item from the same menu subcategory (confirmed in the reference
-project) and passes on the real POS. POS-SALE-002 needs the change /
-non-exact amount path of the payment dialog inspected first.
+project) and passes on the real POS. POS-SALE-002 pays the next round
+hundred (e.g. 374.50 -> 400): paid = 400, balance = -25.50, and the change
+dialog (DlgChange) shows 25.50 before the screen resets.

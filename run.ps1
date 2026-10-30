@@ -8,6 +8,7 @@
     .\run.ps1 -Exclude pending-first-run       # ข้าม test ที่ยังไม่เคยรันจริง
     .\run.ps1 -Tests tests/sales -DryRun       # เช็ค keyword/argument โดยไม่เปิด POS
     .\run.ps1 -Tests tests/receipt -Variable RECALL_SALE_NUM:RC6812230014   # ส่งตัวแปรให้ test
+    .\run.ps1 -RerunFailed                     # ถ้ามีตัว fail รันซ้ำเฉพาะตัวนั้น แล้วรวมผล
 
 .NOTES
     test คุม POS บนหน้าจอจริง ห้ามแตะเมาส์/คีย์บอร์ดระหว่างรัน
@@ -19,7 +20,8 @@ param(
     [string[]]$Include = @(),
     [string[]]$Exclude = @(),
     [string[]]$Variable = @(),
-    [switch]$DryRun
+    [switch]$DryRun,
+    [switch]$RerunFailed
 )
 
 $root = $PSScriptRoot
@@ -45,6 +47,15 @@ Push-Location $root
 try {
     & $robot @robotArgs
     $rc = $LASTEXITCODE
+
+    # รันซ้ำเฉพาะตัวที่ fail (แยก flaky ออกจากพังจริง) แล้วรวมผลไว้ที่ merged/
+    if ($RerunFailed -and -not $DryRun -and $rc -gt 0) {
+        $rerunDir = Join-Path $outDir 'rerun'
+        & $robot --rerunfailed (Join-Path $outDir 'output.xml') --outputdir $rerunDir @($robotArgs | Select-Object -Skip 2)
+        $rc = $LASTEXITCODE
+        $rebot = Join-Path $root '.venv\Scripts\rebot.exe'
+        & $rebot --merge --outputdir (Join-Path $outDir 'merged') (Join-Path $outDir 'output.xml') (Join-Path $rerunDir 'output.xml')
+    }
 } finally {
     Pop-Location
 }

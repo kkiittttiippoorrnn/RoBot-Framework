@@ -20,6 +20,16 @@ POS-SALE-001 - Basic Cash Sale
     ${order_total}=    Wait Until Order Total Changes From    0.00
     Pay Exact Cash And Finish Sale    ${order_total}
 
+POS-SALE-002 - Cash Payment With Change
+    [Documentation]    สินค้า 1 รายการ จ่ายเงินสดเกินยอด (หลักร้อยถัดไป) -> รับเงินตรงที่จ่าย
+    ...    คงค้างติดลบเท่าเงินทอน และกลับหน้าสั่งอาหารยอด 0.00
+    Launch And Login To POS
+    Open Front End
+    Add Quick Sale Item    ${WALK_IN_ITEM}
+    ${order_total}=    Wait Until Order Total Changes From    0.00
+    ${tendered}=    Get Next Round Amount    ${order_total}
+    Pay Cash With Change And Finish Sale    ${order_total}    ${tendered}
+
 POS-SALE-003 - Multiple-Item Cash Sale
     [Documentation]    สินค้า 2 รายการ -> ยอดรวมต้องเพิ่มทุกครั้งที่เพิ่มสินค้า แล้วจ่ายเงินสดพอดี
     Launch And Login To POS

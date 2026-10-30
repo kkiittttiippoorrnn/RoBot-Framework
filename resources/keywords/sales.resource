@@ -4,6 +4,7 @@ Documentation    Flow 02 - หน้าสั่งอาหาร, เพิ่
 Library     RPA.Windows
 Resource    ../locators/login_screen.resource
 Resource    ../locators/sales_screen.resource
+Resource    common.resource
 Variables   ../../test-data/menu.py
 
 
@@ -116,6 +117,62 @@ Payment Should Match Total Due
     ${balance}=    Get Attribute    ${PAYMENT.BALANCE_FIELD}    Name
     Should Be Equal As Strings    ${paid}    ${due}    msg=รับเงิน '${paid}' ไม่เท่ายอด '${due}'
     Should Be Equal As Strings    ${balance}    0.00    msg=คงค้าง '${balance}' ควรเป็น 0.00
+
+Pay Cash With Change And Finish Sale
+    [Documentation]    จ่ายเงินสดเกินยอด (${tendered}) จนกลับหน้าสั่งอาหารว่าง
+    [Arguments]    ${order_total}    ${tendered}
+    Open Payment Dialog
+    Payment Dialog Total Due Should Be    ${order_total}
+    Select Cash Payment
+    Enter Cash Payment Amount    ${tendered}
+    Payment Should Show Change    ${tendered}
+    Finish Sale
+    Decline Kitchen Print
+    Change Dialog Should Show    ${order_total}    ${tendered}
+    Order Screen Should Be Displayed With Reset Total
+
+Get Next Round Amount
+    [Documentation]    จำนวนเงินกลม ๆ หลักร้อยถัดไปที่มากกว่ายอด เช่น 374.50 -> 400, 400.00 -> 500
+    [Arguments]    ${order_total}
+    ${amount}=    Evaluate    int(float($order_total.replace(",", "")) // 100 + 1) * 100
+    RETURN    ${amount}
+
+Enter Cash Payment Amount
+    [Documentation]    ล้างช่องใน DlgAmount แล้วกดตัวเลขทีละปุ่ม จากนั้นกดตกลง
+    [Arguments]    ${amount}
+    Control Window    ${PAYMENT.AMOUNT_DIALOG}
+    Click    ${PAYMENT.AMOUNT_CLEAR_BUTTON}
+    @{keys}=    Evaluate    list(str($amount))
+    FOR    ${key}    IN    @{keys}
+        IF    $key == "."
+            Click    ${PAYMENT.AMOUNT_POINT_BUTTON}
+        ELSE
+            Click    id:btnNum${key}
+        END
+    END
+    Click    ${PAYMENT.AMOUNT_CONFIRM_BUTTON}
+    Sleep    ${POS_SETTLE_DELAY}
+    Control Window    ${PAYMENT.DIALOG}
+
+Payment Should Show Change
+    [Documentation]    รับเงิน = ${tendered} และคงค้างติดลบเท่าเงินทอน (ยอด - รับเงิน)
+    [Arguments]    ${tendered}
+    ${due}=    Read Amount From Screen    ${PAYMENT.TOTAL_DUE_FIELD}
+    ${paid}=    Read Amount From Screen    ${PAYMENT.PAID_FIELD}
+    ${balance}=    Read Amount From Screen    ${PAYMENT.BALANCE_FIELD}
+    Should Be Equal As Numbers    ${paid}    ${tendered}    msg=รับเงิน ${paid} ควรเป็น ${tendered}
+    ${expected_balance}=    Evaluate    round(${due} - ${tendered}, 2)
+    Should Be Equal As Numbers    ${balance}    ${expected_balance}
+    ...    msg=คงค้าง ${balance} ควรเป็น ${expected_balance} (ยอด ${due} - รับเงิน ${tendered})
+
+Change Dialog Should Show
+    [Documentation]    หน้าต่างเงินทอนแสดง รับเงิน - ยอด แล้วกดตกลงปิด
+    [Arguments]    ${order_total}    ${tendered}
+    Control Window    ${CHANGE.DIALOG}
+    ${change}=    Read Amount From Screen    ${CHANGE.AMOUNT_FIELD}
+    ${expected}=    Evaluate    round(${tendered} - float($order_total.replace(",", "")), 2)
+    Should Be Equal As Numbers    ${change}    ${expected}    msg=เงินทอนบนจอ ${change} ควรเป็น ${expected}
+    Click    ${CHANGE.OK_BUTTON}
 
 Finish Sale
     [Documentation]    กดสิ้นสุดการขาย

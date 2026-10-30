@@ -21,3 +21,16 @@ POS-E2E-001 - Cash Sale Is Saved To Database
     ${sale_num}=    Get Latest Sale Number From Sale Lookup
     Log    SaleNum ${sale_num}, screen total ${order_total}    console=yes
     Exact Cash Sale Should Be Saved In Database    ${sale_num}    ${order_total}    ${WALK_IN_ITEM}
+
+POS-E2E-002 - Cash Sale With Change Is Saved To Database
+    [Documentation]    ขายสินค้า 1 รายการ จ่ายเงินสดเกินยอด -> บิลใน DB ต้องยอดตรงจอ
+    ...    รับเงินตรงที่จ่าย และเงินทอน = รับเงิน - ยอด
+    Launch And Login To POS
+    Open Front End
+    Add Quick Sale Item    ${WALK_IN_ITEM}
+    ${order_total}=    Wait Until Order Total Changes From    0.00
+    ${tendered}=    Get Next Round Amount    ${order_total}
+    Pay Cash With Change And Finish Sale    ${order_total}    ${tendered}
+    ${sale_num}=    Get Latest Sale Number From Sale Lookup
+    Log    SaleNum ${sale_num}, screen total ${order_total}, tendered ${tendered}    console=yes
+    Cash Sale With Change Should Be Saved In Database    ${sale_num}    ${order_total}    ${tendered}    ${WALK_IN_ITEM}

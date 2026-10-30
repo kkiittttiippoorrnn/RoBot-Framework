@@ -10,9 +10,8 @@ See `tests/login/README.md`. POS-LOGIN-001 (Successful Login) is the only
 test case for now.
 
 ## Flow 02 — Basic POS Sale
-See `tests/sales/README.md`. POS-SALE-001 (Basic Cash Sale) is done;
-POS-SALE-003 (multi-item) is written and pending its first run; POS-SALE-002
-(change) waits on inspecting the change-payment path.
+See `tests/sales/README.md`. POS-SALE-001 (exact cash), POS-SALE-002
+(cash with change) and POS-SALE-003 (multi-item) pass on the real POS.
 
 ## Flow 03 — Payment
 See `tests/payment/README.md`. Expands payment validation once Flow 02 is
@@ -23,8 +22,8 @@ See `tests/receipt/README.md`. POS-RECEIPT-001 (Recall Receipt Matches
 Database) - ported, passing on the real POS since 2026-10-30.
 
 ## Flow 05 — End-to-End Sale + Database Validation
-See `tests/e2e/README.md`. POS-E2E-001 (Cash Sale Is Saved To Database) -
-ported, passing on the real POS since 2026-10-30. SQL Server via `pyodbc` (`libraries/PosDatabase.py`).
+See `tests/e2e/README.md`. POS-E2E-001 (exact cash), POS-E2E-002 (cash with
+change) and the data-driven POS-E2E-DD-01..03 pass on the real POS. SQL Server via `pyodbc` (`libraries/PosDatabase.py`).
 
 ## Flow 06 — Dine-in Sale + Database Validation
 See `tests/dine_in/README.md`. POS-DINEIN-001 (Dine-in Sale Is Saved To

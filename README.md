@@ -7,9 +7,12 @@ in restaurants. The tests drive the real application through Windows UI
 Automation and then check what it saved in **SQL Server**, so a test passes
 only when both the screen and the database are right.
 
-**13 tests, 5 business flows, all passing on the live POS.**
+**18 tests, 5 business flows, all passing on the live POS.**
 
-![Robot Framework report: 13 of 13 passed](docs/images/report-13-of-13.png)
+![Robot Framework report: 18 of 18 passed](docs/images/report-18-of-18.png)
+
+<sub>Merged report of a full run plus `-RerunFailed`: two tests failed at POS
+start-up / login on the first pass and passed on the automatic rerun.</sub>
 
 ## What this project shows
 
@@ -41,9 +44,9 @@ flowchart LR
 | Flow | Tests | What is checked |
 |---|---|---|
 | 01 Login | POS-LOGIN-001 … 008 | Valid / wrong / empty / too-short PIN, Clear button, retry after failure, logout and login again, login state on screen |
-| 02 Cash sale | POS-SALE-001, 003 | One and two items: total updates after each item, payment dialog asks for the order total, balance 0.00, screen resets after the sale |
+| 02 Cash sale | POS-SALE-001 … 003 | Exact cash, cash with change (paid, negative balance and the change dialog all equal tendered − total), two items: total updates after each item, screen resets after the sale |
 | 04 Receipt recall | POS-RECEIPT-001 | Opens a random saved bill; subtotal, discount, tax and total on screen equal the database |
-| 05 Sale + database | POS-E2E-001 | Walk-in sale, then the saved bill is checked in SQL Server |
+| 05 Sale + database | POS-E2E-001, 002, DD-01 … 03 | Walk-in sale, then the saved bill is checked in SQL Server: exact cash, cash with change (Tendered and Change), and a **data-driven** run (`Test Template`) over several menu items |
 | 06 Dine-in + database | POS-DINEIN-001 | Open a table, enter guests, order, pay, then check the saved bill |
 
 Full flow descriptions: [`docs/flows.md`](docs/flows.md).
@@ -101,6 +104,7 @@ saves a screenshot there.
 .\run.ps1 -Include smoke                      # quick check: login + one sale
 .\run.ps1 -Tests tests/sales                  # one flow
 .\run.ps1 -DryRun                             # check keywords and arguments, no POS
+.\run.ps1 -RerunFailed                        # rerun only failed tests, merge the reports
 .\run.ps1 -Tests tests/receipt -Variable RECALL_SALE_NUM:<bill number>   # re-run one bill
 ```
 
@@ -113,6 +117,7 @@ on each other or on run order.
 | `flow-01` … `flow-06` | Business flow |
 | `login`, `sales`, `receipt`, `e2e`, `dine-in` | Functional area |
 | `db` | Also checks SQL Server |
+| `data-driven` | One template keyword, one row per data set |
 | `pending-first-run` | New test not yet run on the real POS |
 
 Lint: `robocop --argumentfile .robocop tests resources`. CI runs Robocop and a
@@ -121,7 +126,6 @@ run on the test machine.
 
 ## Next
 
-- Flow 03 payment checks and POS-SALE-002 (payment with change)
-- Data-driven sales test (`Test Template`) over several menu items
+- Flow 03 payment checks (amount too low, several payment methods)
 - Bill-level discount (no such bill in the test database yet)
 - Receipt printing as its own test
