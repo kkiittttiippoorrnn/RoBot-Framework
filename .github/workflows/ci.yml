@@ -1,0 +1,35 @@
+# ตรวจโค้ดอย่างเดียว (lint + dry-run)
+# test จริงต้องใช้ POS และ SQL Server บนเครื่องทดสอบ จึงรันด้วย run.ps1 ที่เครื่องนั้น
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  static-checks:
+    runs-on: windows-latest
+    env:
+      PYTHONIOENCODING: utf-8
+      # ค่าหลอกให้ import library DB ได้ตอน dry-run (dry-run ไม่ต่อ DB จริง)
+      POS_DB_SERVER: ci-placeholder
+      POS_DB_NAME: ci-placeholder
+      POS_DB_UID: ci-placeholder
+      POS_DB_PWD: ci-placeholder
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: pip install -r requirements-dev.txt
+      - name: Lint (Robocop)
+        run: robocop --argumentfile .robocop tests resources
+      - name: Dry run (keywords, arguments, imports)
+        run: robot --dryrun --outputdir dryrun tests
+      - name: Upload dry-run report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dryrun-report
+          path: dryrun/

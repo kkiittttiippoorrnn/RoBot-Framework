@@ -1,0 +1,6 @@
+# test เขียนเป็น business flow จึงให้ยาวกว่าค่า default ได้
+--configure too-many-calls-in-test-case:max_calls:20
+--configure too-long-test-case:max_len:30
+--configure line-too-long:line_length:180
+# keyword สั้น ๆ ทำอย่างเดียว ไม่ต้องมี [Documentation]
+--exclude missing-doc-keyword

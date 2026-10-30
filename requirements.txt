@@ -1,0 +1,15 @@
+# Core framework
+robotframework>=7.0,<8.0
+
+# Windows desktop UI automation (native WinForms/WPF apps via UI Automation).
+# Pure-Python, no external .NET agent process required.
+rpaframework-windows>=11.0.0,<12.0.0
+
+# Convenience for local development: load POS_*/DB_* config from a .env
+# file (see .env.example) instead of exporting env vars by hand. Not
+# required in CI, where real environment variables are set directly.
+python-dotenv>=1.0.0,<2.0.0
+
+# SQL Server access for Flow 04-06 database checks (libraries/PosDatabase.py).
+# Needs "ODBC Driver 17 for SQL Server" installed on the machine.
+pyodbc>=5.0.0,<6.0.0

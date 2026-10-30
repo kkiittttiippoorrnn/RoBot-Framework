@@ -1,0 +1,25 @@
+# Secrets / local config
+.env
+*.env.local
+
+# Robot Framework run output
+evidence/**
+!evidence/README.md
+*.robolog
+output.xml
+log.html
+report.html
+selenium-screenshot-*.png
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
