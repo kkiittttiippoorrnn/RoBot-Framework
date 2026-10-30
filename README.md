@@ -1,140 +1,127 @@
-# POS Automation
+# POS Test Automation — Robot Framework
 
 ![CI](https://github.com/kkiittttiippoorrnn/RoBot-Framework/actions/workflows/ci.yml/badge.svg)
 
-Robot Framework automation project for a Windows-based POS system, built as
-a standalone Automation Tester portfolio piece. It demonstrates realistic
-POS business-flow testing: reliable synchronization, reusable keywords,
-clean separation between test scenarios / locators / data, meaningful UI
-and database assertions, and no invented application behavior.
+End-to-end test automation for a **Windows desktop POS** (point of sale) used
+in restaurants. The tests drive the real application through Windows UI
+Automation and then check what it saved in **SQL Server**, so a test passes
+only when both the screen and the database are right.
 
-## Status
+**13 tests, 5 business flows, all passing on the live POS.**
 
-- **Flow 01 (Login)** and **Flow 02 (POS-SALE-001)** are built from real
-  UI-Automation inspection and have been iterated against real runs on the
-  live POS - every fix and what it was based on is in
-  `docs/inspection-log.md`.
-- **Flows 04-06** (Recall Receipt, sale + database check, dine-in sale +
-  database check) were ported from an older automation of the same POS
-  install. Their first run here (2026-10-30) needed a few fixes - the
-  reference matched English captions, this POS runs in Thai - listed in
-  `docs/inspection-log.md`.
-- Latest full run on the real POS: **13 / 13 passed** (2026-10-30).
-- **Flow 03** (payment edge cases) is not started.
+![Robot Framework report: 13 of 13 passed](docs/images/report-13-of-13.png)
 
-## Scope
+## What this project shows
 
-Six business flows, built one at a time and reusing keywords across them.
-Full detail in `docs/flows.md`:
+- **Business-level tests.** Test cases read like the flow a cashier follows;
+  clicks and waits live in reusable keywords.
+- **UI + database assertions.** After a sale, the saved bill must match the
+  total on screen, Tendered = Total, Change = 0, and contain the ordered item.
+- **Debugging a real application, not a demo app.** Every failure on the live
+  POS and how it was traced and fixed is recorded in
+  [`docs/inspection-log.md`](docs/inspection-log.md). A few are summarized under
+  [Problems solved](#problems-solved).
+- **Engineering around the tests:** one-command runner, tags, screenshot on
+  failure, secrets and test data in `.env`, Robocop lint and a CI dry run on
+  every push.
 
-- **Flow 01** — Login (`POS-LOGIN-001`).
-- **Flow 02** — Basic POS sale (cash, change, multi-item).
-- **Flow 03** — Payment validation.
-- **Flow 04** — Receipt/transaction recall and verification.
-- **Flow 05** — End-to-end sale with SQL Server validation of persisted data.
-- **Flow 06** — Dine-in (table) sale with SQL Server validation.
+## How it fits together
 
-## Structure
+```mermaid
+flowchart LR
+    T["tests/<br/>business flows"] --> K["resources/keywords/<br/>reusable steps"]
+    K --> L["resources/locators/<br/>UI selectors"]
+    K --> W["RPA.Windows<br/>(UI Automation)"] --> POS["POS desktop app"]
+    K --> D["libraries/PosDatabase.py<br/>(read-only SQL)"] --> DB[("SQL Server")]
+    E[".env<br/>PIN, paths, DB, menu"] --> V["variables + test-data"] --> K
+```
+
+## Test coverage
+
+| Flow | Tests | What is checked |
+|---|---|---|
+| 01 Login | POS-LOGIN-001 … 008 | Valid / wrong / empty / too-short PIN, Clear button, retry after failure, logout and login again, login state on screen |
+| 02 Cash sale | POS-SALE-001, 003 | One and two items: total updates after each item, payment dialog asks for the order total, balance 0.00, screen resets after the sale |
+| 04 Receipt recall | POS-RECEIPT-001 | Opens a random saved bill; subtotal, discount, tax and total on screen equal the database |
+| 05 Sale + database | POS-E2E-001 | Walk-in sale, then the saved bill is checked in SQL Server |
+| 06 Dine-in + database | POS-DINEIN-001 | Open a table, enter guests, order, pay, then check the saved bill |
+
+Full flow descriptions: [`docs/flows.md`](docs/flows.md).
+
+## Problems solved
+
+Real issues found while running against the live POS:
+
+| Problem | What was going on | Fix |
+|---|---|---|
+| Buttons not found ("OK") | Locators matched English captions; the POS runs in Thai | Locate by control AutomationId, which does not depend on language |
+| Receipt total read as "4" instead of 2,683.56 | Amounts used a positional locator; on long bills a scrollbar appears and shifts the footer by one, so it pointed at a data row. Found only because the test picks a **random** bill | Locate the grid's footer cells by caption; verified on long, short and discounted bills |
+| Discount on screen 149.00, database 0.00 | Query read only the bill-level discount; this bill had an item-level one | Sum both; the formula holds for 34,284 of 34,301 historical bills |
+| 16 s lost checking for an optional popup | Searching the whole desktop for a window that is not there is slow, far beyond the set timeout | Poll inside the POS window every 0.2 s for whichever appears first: 16.4 s → 0.07 s |
+| Leftover POS processes between tests | The POS relaunches itself, leaving the real process orphaned | `scripts/close_pos.ps1` closes only orphaned POS processes by PID, never one a person has open |
+
+## Project structure
 
 ```
-pos-automation/
-├── tests/                  # One folder per business flow; test cases only
-│   ├── login/
-│   ├── sales/
-│   ├── payment/
-│   ├── receipt/
-│   ├── e2e/
-│   └── dine_in/
+├── tests/                  test cases only, one folder per flow
 ├── resources/
-│   ├── keywords/           # Reusable, business-level keywords (.resource)
-│   ├── locators/           # UI Automation selectors, separate from keywords
-│   └── variables/          # Environment-sourced config (no hard-coded secrets)
-├── libraries/               # Custom Python library code, added only if genuinely needed
-├── test-data/                # Static, non-secret test data
-├── evidence/                  # Run output: logs, screenshots, captured IDs (git-ignored)
-├── docs/                       # Architecture decisions, flow spec, inspection log
-├── requirements.txt
-├── .env.example
-└── .gitignore
+│   ├── keywords/           reusable steps (login, sales, receipt, dine-in, common)
+│   ├── locators/           UI selectors, one file per screen
+│   └── variables/          config read from .env
+├── libraries/              PosDatabase.py - read-only SQL checks
+├── test-data/              menu data (real names come from .env)
+├── scripts/                close_pos.ps1 - safe process cleanup
+├── docs/                   flows, architecture decisions, inspection log
+├── run.ps1                 test runner
+└── .github/workflows/      CI: Robocop + dry run
 ```
+
+Code comments and keyword documentation are written in Thai.
 
 ## Setup
 
+Windows only — RPA.Windows drives the Windows UI Automation tree. Database
+checks need *ODBC Driver 17 for SQL Server*.
+
 ```
 python -m venv .venv
-.venv\Scripts\activate        # Windows
-pip install -r requirements-dev.txt   # requirements.txt + Robocop
-copy .env.example .env        # then fill in POS_PIN, POS_APP_*, POS_DB_*
+.venv\Scripts\activate
+pip install -r requirements-dev.txt
+copy .env.example .env      # PIN, POS path, database, menu names
 ```
 
-Robot Framework's Windows desktop automation (`RPA.Windows`) has to run on
-Windows, since it drives the OS's UI Automation tree — this project is not
-runnable purely from a Linux/macOS machine. Database checks also need
-"ODBC Driver 17 for SQL Server".
+## Running
 
-## Running tests
-
-Use `run.ps1` - it picks the project venv, fixes the console encoding Robot
-needs, and writes each run to its own `evidence/<timestamp>/` folder.
-UI tests drive the real POS on the desktop, so leave the mouse and keyboard
-alone while they run.
+The tests use the real mouse and keyboard, so leave the machine alone while
+they run. Each run is saved to `evidence/<timestamp>/`; a failing test also
+saves a screenshot there.
 
 ```
-.\run.ps1                               # everything
-.\run.ps1 -Include smoke                # quick check: login + one sale
-.\run.ps1 -Exclude pending-first-run    # only tests already run on the real POS
-.\run.ps1 -Tests tests/sales            # one flow
-.\run.ps1 -DryRun                       # keywords/arguments/imports only, no POS
-.\run.ps1 -Tests tests/receipt -Variable RECALL_SALE_NUM:<SaleNum>   # re-run one bill
+.\run.ps1                                     # all tests
+.\run.ps1 -Include smoke                      # quick check: login + one sale
+.\run.ps1 -Tests tests/sales                  # one flow
+.\run.ps1 -DryRun                             # check keywords and arguments, no POS
+.\run.ps1 -Tests tests/receipt -Variable RECALL_SALE_NUM:<bill number>   # re-run one bill
 ```
 
-Each test launches its own POS and closes it afterwards, so tests don't
-depend on execution order. When a test fails, a desktop screenshot named
-after it is saved next to `log.html`.
-
-### Tags
+Every test starts its own POS and closes it afterwards, so tests do not depend
+on each other or on run order.
 
 | Tag | Meaning |
 |---|---|
-| `smoke` | Minimal health check: POS-LOGIN-001, POS-SALE-001 |
-| `flow-01` ... `flow-06` | One tag per business flow (`docs/flows.md`) |
+| `smoke` | Minimal health check (POS-LOGIN-001, POS-SALE-001) |
+| `flow-01` … `flow-06` | Business flow |
 | `login`, `sales`, `receipt`, `e2e`, `dine-in` | Functional area |
-| `db` | Also validates data in SQL Server |
-| `pending-first-run` | Written or ported, but not yet run on the real POS from this project |
+| `db` | Also checks SQL Server |
+| `pending-first-run` | New test not yet run on the real POS |
 
-### Static checks
+Lint: `robocop --argumentfile .robocop tests resources`. CI runs Robocop and a
+dry run on every push; the UI tests need the real POS and database, so they
+run on the test machine.
 
-```
-robocop --argumentfile .robocop tests resources
-```
+## Next
 
-CI (`.github/workflows/ci.yml`) runs Robocop and a Robot dry run on every
-push. The UI tests themselves need the real POS and database, so they run
-on the test machine only.
-
-## Principles this project follows
-
-- Real application behavior only — every locator and assertion comes from
-  actually inspecting the running POS (`docs/inspection-log.md`), never
-  guessed. Where something genuinely couldn't be confirmed yet, it's
-  flagged as an open question there rather than assumed.
-- Reusable keywords over copy-pasted click sequences; test cases stay
-  readable at the business-flow level (see `tests/login/pos_login.robot`).
-- Locators, test data, and scenario logic are kept in separate files.
-- Deterministic waits on real application/element state (RPA.Windows's
-  built-in locator polling, `Wait Until Keyword Succeeds`). The only fixed
-  delay is a 0.5s settle before re-attaching after a state-changing click,
-  added in response to a specific real-run failure (`docs/inspection-log.md`, Fix #7).
-- Every action that matters has a meaningful assertion; database checks in
-  Flows 04-06 complement the UI assertions, they don't replace them or just
-  prove a row exists.
-- No hard-coded credentials — config comes from environment variables (see
-  `resources/variables/environment.py` and `.env.example`).
-- Grow the architecture only when a real flow needs it (see
-  `docs/architecture-decisions.md`); avoid pre-building abstractions.
-
-## Not in scope
-
-No AI agents, RPA workflow tooling beyond the Windows UI library itself, or
-unrelated frameworks. This project is scoped to Robot Framework POS test
-automation only.
+- Flow 03 payment checks and POS-SALE-002 (payment with change)
+- Data-driven sales test (`Test Template`) over several menu items
+- Bill-level discount (no such bill in the test database yet)
+- Receipt printing as its own test
