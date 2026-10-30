@@ -165,6 +165,48 @@ Payment Should Show Change
     Should Be Equal As Numbers    ${balance}    ${expected_balance}
     ...    msg=คงค้าง ${balance} ควรเป็น ${expected_balance} (ยอด ${due} - รับเงิน ${tendered})
 
+Get Half Amount
+    [Documentation]    ครึ่งหนึ่งของยอด ปัดลงเป็นจำนวนเต็ม เช่น 374.50 -> 187
+    [Arguments]    ${order_total}
+    ${amount}=    Evaluate    int(float($order_total.replace(",", "")) // 2)
+    RETURN    ${amount}
+
+Payment Should Show Balance
+    [Documentation]    รับเงินรวม = ${paid} และคงค้าง = ยอด - รับเงิน (ยังจ่ายไม่ครบ)
+    [Arguments]    ${paid}
+    ${due}=    Read Amount From Screen    ${PAYMENT.TOTAL_DUE_FIELD}
+    ${shown_paid}=    Read Amount From Screen    ${PAYMENT.PAID_FIELD}
+    ${balance}=    Read Amount From Screen    ${PAYMENT.BALANCE_FIELD}
+    ${expected_balance}=    Evaluate    round(${due} - ${paid}, 2)
+    Should Be Equal As Numbers    ${shown_paid}    ${paid}    msg=รับเงิน ${shown_paid} ควรเป็น ${paid}
+    Should Be Equal As Numbers    ${balance}    ${expected_balance}    msg=คงค้าง ${balance} ควรเป็น ${expected_balance}
+
+Payment Warning Should Appear
+    [Documentation]    รอ MessageBox เตือนในหน้าจ่ายเงิน เช็คข้อความตาม regex แล้วกด OK
+    [Arguments]    ${expected_text}
+    Wait Until Keyword Succeeds    5s    0.2s    Get Element    ${PAYMENT.WARNING}    timeout=0.1
+    ${text}=    Get Attribute    ${PAYMENT.WARNING_TEXT}    Name
+    Log    คำเตือน: ${text}    console=yes
+    Should Match Regexp    ${text}    ${expected_text}    msg=ข้อความเตือน "${text}" ไม่ตรงกับที่คาด
+    Click    ${PAYMENT.WARNING_OK_BUTTON}
+    Control Window    ${PAYMENT.DIALOG}
+
+Finish Sale Should Be Blocked
+    [Documentation]    กดสิ้นสุดการขายตอนจ่ายไม่ครบ -> ต้องเตือน "การชำระเงินไม่ถูกต้อง"
+    Finish Sale
+    Payment Warning Should Appear    (ไม่ถูกต้อง|not valid)
+
+Duplicate Cash Payment Should Be Rejected
+    [Documentation]    กดเงินสดซ้ำในบิลเดียว -> ต้องเตือน "การชำระเงินประเภทนี้มีอยู่แล้ว"
+    Select Cash Payment
+    Payment Warning Should Appear    (มีอยู่แล้ว|already exist)
+
+Cancel Payment
+    [Documentation]    กดยกเลิกในหน้าจ่ายเงิน -> กลับหน้าสั่งอาหาร
+    Control Window    ${PAYMENT.DIALOG}
+    Click    ${PAYMENT.CANCEL_BUTTON}
+    Control Window    ${ORDER.WINDOW}
+
 Change Dialog Should Show
     [Documentation]    หน้าต่างเงินทอนแสดง รับเงิน - ยอด แล้วกดตกลงปิด
     [Arguments]    ${order_total}    ${tendered}

@@ -1,12 +1,21 @@
-# Flow 03 — Payment
+# Flow 03 — Payment rules
 
-Expands payment validation once the basic cash sale (POS-SALE-001) is
-stable: exact cash payment, cash with change, payment result validation,
-and invalid/insufficient payment only if the real POS actually supports
-that path.
+Checks the payment dialog's own rules, using only behavior seen on the real
+POS (`tests/payment/payment_validation.robot`).
 
-Validates business results such as amount paid, total, change, payment
-status, and sale completion — not invented payment rules.
+## POS-PAY-001 — Insufficient Cash Cannot Finish Sale
 
-Not started. Depends on Flow 02 and on inspecting the real payment screen's
-behavior for edge cases.
+Pay half the total in cash: paid and balance are right. *Finish Sale* shows
+the warning "Payment is not valid, please check." and the sale stays open
+with the same balance. Cancelling the payment returns to the order screen
+with the same total.
+
+## POS-PAY-002 — Same Payment Method Cannot Be Added Twice
+
+After a partial cash payment, choosing cash again shows "Payment type is
+already exist in payment list, please check" and paid / balance do not
+change. (Found while trying to write a split cash payment: the POS allows
+one payment per method, so a split payment needs two different methods.)
+
+Warnings are matched in Thai or English, so the test does not depend on the
+POS language.

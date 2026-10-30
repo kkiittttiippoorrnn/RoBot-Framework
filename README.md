@@ -7,12 +7,13 @@ in restaurants. The tests drive the real application through Windows UI
 Automation and then check what it saved in **SQL Server**, so a test passes
 only when both the screen and the database are right.
 
-**18 tests, 5 business flows, all passing on the live POS.**
+**20 tests, 6 business flows, all passing on the live POS.**
 
 ![Robot Framework report: 18 of 18 passed](docs/images/report-18-of-18.png)
 
 <sub>Merged report of a full run plus `-RerunFailed`: two tests failed at POS
-start-up / login on the first pass and passed on the automatic rerun.</sub>
+start-up / login on the first pass and passed on the automatic rerun.
+Flow 03 (2 tests) was added after this run and passes on its own.</sub>
 
 ## What this project shows
 
@@ -45,6 +46,7 @@ flowchart LR
 |---|---|---|
 | 01 Login | POS-LOGIN-001 … 008 | Valid / wrong / empty / too-short PIN, Clear button, retry after failure, logout and login again, login state on screen |
 | 02 Cash sale | POS-SALE-001 … 003 | Exact cash, cash with change (paid, negative balance and the change dialog all equal tendered − total), two items: total updates after each item, screen resets after the sale |
+| 03 Payment rules | POS-PAY-001, 002 | Paying only part: balance is right and *Finish Sale* is refused with a warning; the same payment method cannot be added twice; cancelling returns to the order unchanged |
 | 04 Receipt recall | POS-RECEIPT-001 | Opens a random saved bill; subtotal, discount, tax and total on screen equal the database |
 | 05 Sale + database | POS-E2E-001, 002, DD-01 … 03 | Walk-in sale, then the saved bill is checked in SQL Server: exact cash, cash with change (Tendered and Change), and a **data-driven** run (`Test Template`) over several menu items |
 | 06 Dine-in + database | POS-DINEIN-001 | Open a table, enter guests, order, pay, then check the saved bill |
@@ -115,7 +117,7 @@ on each other or on run order.
 |---|---|
 | `smoke` | Minimal health check (POS-LOGIN-001, POS-SALE-001) |
 | `flow-01` … `flow-06` | Business flow |
-| `login`, `sales`, `receipt`, `e2e`, `dine-in` | Functional area |
+| `login`, `sales`, `payment`, `receipt`, `e2e`, `dine-in` | Functional area |
 | `db` | Also checks SQL Server |
 | `data-driven` | One template keyword, one row per data set |
 | `pending-first-run` | New test not yet run on the real POS |
@@ -126,6 +128,6 @@ run on the test machine.
 
 ## Next
 
-- Flow 03 payment checks (amount too low, several payment methods)
+- Split payment across two different methods (cash + card)
 - Bill-level discount (no such bill in the test database yet)
 - Receipt printing as its own test

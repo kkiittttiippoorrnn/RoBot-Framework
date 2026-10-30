@@ -14,8 +14,9 @@ See `tests/sales/README.md`. POS-SALE-001 (exact cash), POS-SALE-002
 (cash with change) and POS-SALE-003 (multi-item) pass on the real POS.
 
 ## Flow 03 — Payment
-See `tests/payment/README.md`. Expands payment validation once Flow 02 is
-stable.
+See `tests/payment/README.md`. POS-PAY-001 (partial payment cannot finish the
+sale) and POS-PAY-002 (same payment method cannot be added twice) pass on the
+real POS.
 
 ## Flow 04 — Receipt / Transaction Verification
 See `tests/receipt/README.md`. POS-RECEIPT-001 (Recall Receipt Matches

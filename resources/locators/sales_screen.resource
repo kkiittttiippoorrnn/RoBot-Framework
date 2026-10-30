@@ -29,6 +29,13 @@ ${PAYMENT.AMOUNT_CLEAR_BUTTON}     id:btnClear
 ${PAYMENT.AMOUNT_POINT_BUTTON}     id:btnPoint
 # ปุ่มตัวเลข: id:btnNum0 ... id:btnNum9
 
+${PAYMENT.CANCEL_BUTTON}           id:btnCancel
+
+# MessageBox เตือนในหน้าจ่ายเงิน (หัวข้อ "เตือน" ปุ่มเดียวคือ OK) ข้อความอยู่ที่ id 65535
+${PAYMENT.WARNING}                 class:#32770
+${PAYMENT.WARNING_TEXT}            class:#32770 > automationid:65535
+${PAYMENT.WARNING_OK_BUTTON}       class:#32770 > control:ButtonControl
+
 # หน้าต่างเงินทอน (ขึ้นหลังสิ้นสุดการขายเมื่อจ่ายเกินยอด)
 ${CHANGE.DIALOG}                   id:DlgChange
 ${CHANGE.AMOUNT_FIELD}             id:txtAmount

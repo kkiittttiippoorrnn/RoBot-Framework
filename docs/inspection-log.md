@@ -1111,3 +1111,19 @@ which passed in every earlier run, and both passed when rerun with
 `robot --rerunfailed`. Added `run.ps1 -RerunFailed`: reruns only the failed
 tests into `rerun/` and merges both runs into `merged/` (exit code = rerun
 result), so a slow POS start is told apart from a real failure.
+
+## Flow 03 - payment rules (POS-PAY-001, POS-PAY-002)
+
+From the POS source: *Finish Sale* with a positive balance shows a MessageBox
+"Payment is not valid, please check." (th-TH "การชำระเงินไม่ถูกต้อง
+กรุณาตรวจสอบ", title "เตือน") and does not close the sale. Message text is
+read from the MessageBox static control (`automationid:65535`).
+
+The first plan was a split cash payment (half + rest). The run showed the
+POS refuses a second cash payment: "การชำระเงินประเภทนี้มีอยู่แล้ว
+กรุณาตรวจสอบ" (Payment type is already exist in payment list). That rule
+became POS-PAY-002; a real split payment needs two different methods.
+
+`id:DlgPaymentW8 > id:btnCancel` was not found after `Control Window` on the
+payment dialog - the search already starts inside that dialog, so the cancel
+button is just `id:btnCancel`. Both tests pass.
